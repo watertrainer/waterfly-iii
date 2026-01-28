@@ -2,6 +2,14 @@
 
 This document provides detailed visual representations of how data flows through the Waterfly III application.
 
+## Network Requirements Legend
+
+- 🌐 **Internet Required** - Step requires active internet connection to Firefly III server
+- 💾 **Offline Capable** - Step can work with cached data (no internet needed)
+- ⚡ **Local Only** - Step is completely local (never requires internet)
+
+---
+
 ## Table of Contents
 1. [Application Startup Flow](#application-startup-flow)
 2. [Authentication Flow](#authentication-flow)
@@ -10,6 +18,7 @@ This document provides detailed visual representations of how data flows through
 5. [Settings Management Flow](#settings-management-flow)
 6. [Notification Processing Flow](#notification-processing-flow)
 7. [Cache Invalidation Flow](#cache-invalidation-flow)
+8. [Network Requirements Summary](#network-requirements-summary)
 
 ---
 
@@ -18,11 +27,12 @@ This document provides detailed visual representations of how data flows through
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                          App Launch (main.dart)                      │
+│                              ⚡ LOCAL ONLY                           │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Initialize Logger, Timezone, Intl                                    │
+│ Initialize Logger, Timezone, Intl                 ⚡ LOCAL ONLY      │
 │ - Logger.root.level = DEBUG/INFO                                     │
 │ - tz.initializeTimeZones()                                           │
 │ - Intl.defaultLocale = findSystemLocale()                            │
@@ -30,12 +40,12 @@ This document provides detailed visual representations of how data flows through
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│                    runApp(WaterflyApp())                             │
+│                    runApp(WaterflyApp())          ⚡ LOCAL ONLY      │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ WaterflyApp._initState()                                             │
+│ WaterflyApp._initState()                          ⚡ LOCAL ONLY      │
 │ ┌──────────────────────────────────────────────────────────────────┐ │
 │ │ Setup FlutterLocalNotificationsPlugin                           │ │
 │ │ Setup QuickActions listener                                      │ │
@@ -46,7 +56,7 @@ This document provides detailed visual representations of how data flows through
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ MultiProvider (app.dart)                                             │
+│ MultiProvider (app.dart)                          ⚡ LOCAL ONLY      │
 │ ┌──────────────────────────────────────────────────────────────────┐ │
 │ │ ChangeNotifierProvider<FireflyService>                          │ │
 │ │ ChangeNotifierProvider<SettingsProvider>                        │ │
@@ -55,13 +65,13 @@ This document provides detailed visual representations of how data flows through
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ Load Settings (_startup = true)                                      │
+│ Load Settings (_startup = true)                   ⚡ LOCAL ONLY      │
 │ context.read<SettingsProvider>().loadSettings()                      │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │
                              ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ SettingsProvider.loadSettings()                                      │
+│ SettingsProvider.loadSettings()                   ⚡ LOCAL ONLY      │
 │ ┌──────────────────────────────────────────────────────────────────┐ │
 │ │ prefs = SharedPreferences.getInstance()                         │ │
 │ │ Load: theme, locale, boolSettings, dashboardCards, etc.         │ │
@@ -78,8 +88,8 @@ This document provides detailed visual representations of how data flows through
                              │          │
                              ▼          ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│ LocalAuthentication.authenticate()    │    Skip biometric auth       │
-│ - Show biometric prompt               │                              │
+│ LocalAuthentication.authenticate() ⚡ LOCAL ONLY                     │
+│ - Show biometric prompt               │    Skip biometric auth       │
 │ - Wait for user authentication        │                              │
 └────────────────────────────┬─────────────────────────────────────────┘
                              │
@@ -97,7 +107,7 @@ This document provides detailed visual representations of how data flows through
 ┌──────────────────────────────────────────────────────────────────────┐
 │ FireflyService.signInFromStorage()                                   │
 │ ┌──────────────────────────────────────────────────────────────────┐ │
-│ │ storage.read('api_host')                                         │ │
+│ │ storage.read('api_host')                      ⚡ LOCAL ONLY      │ │
 │ │ storage.read('api_key')                                          │ │
 │ └────────────────────────────┬───────────────────────────────────┘ │
 └──────────────────────────────┼───────────────────────────────────────┘
@@ -906,14 +916,243 @@ This document provides detailed visual representations of how data flows through
 
 ---
 
+## Network Requirements Summary
+
+This section provides a comprehensive overview of where internet connectivity is required throughout the application.
+
+### Authentication Flow - Network Requirements
+
+| Step | Network Required | Details |
+|------|-----------------|---------|
+| User enters credentials | ⚡ Local Only | Form input processing |
+| Parse & validate URL | ⚡ Local Only | URL format validation |
+| **Test API endpoint** | **🌐 Internet Required** | **HTTP GET /api/v1/about** |
+| **Validate response** | **🌐 Internet Required** | **Check server is Firefly III** |
+| **Check API version** | **🌐 Internet Required** | **HTTP GET /api/v1/about** |
+| **Fetch default currency** | **🌐 Internet Required** | **HTTP GET /api/v1/currencies/primary** |
+| **Fetch server timezone** | **🌐 Internet Required** | **HTTP GET /api/v1/configuration/app.timezone** |
+| Store credentials | ⚡ Local Only | Save to secure storage |
+| Initialize cache | ⚡ Local Only | Create cache structures |
+
+**Total: Authentication process requires internet to validate and configure**
+
+---
+
+### Transaction Loading Flow - Network Requirements
+
+| Step | Network Required | Details |
+|------|-----------------|---------|
+| Build query parameters | ⚡ Local Only | Construct query string |
+| Check cache | 💾 Offline Capable | Read from in-memory cache |
+| **Fetch from API (cache miss)** | **🌐 Internet Required** | **HTTP GET /api/v1/transactions** |
+| Parse JSON response | ⚡ Local Only | Deserialize data |
+| Update cache | ⚡ Local Only | Write to cache |
+| Render UI | 💾 Offline Capable | Display cached or fresh data |
+
+**Total: Initial load requires internet; subsequent views use cache**
+
+---
+
+### Transaction Creation Flow - Network Requirements
+
+| Step | Network Required | Details |
+|------|-----------------|---------|
+| Fill form | ⚡ Local Only | User input |
+| Form validation | ⚡ Local Only | Client-side validation |
+| Build transaction object | ⚡ Local Only | Create model |
+| **Submit to server** | **🌐 Internet Required** | **HTTP POST /api/v1/transactions** |
+| **Upload attachments** | **🌐 Internet Required** | **HTTP POST /api/v1/attachments** |
+| Invalidate cache | ⚡ Local Only | Clear cached lists |
+| Navigate back | ⚡ Local Only | UI navigation |
+
+**Total: Creating/editing transactions requires internet**
+
+---
+
+### Settings Management Flow - Network Requirements
+
+| Step | Network Required | Details |
+|------|-----------------|---------|
+| Load settings | ⚡ Local Only | Read from SharedPreferences |
+| Change theme | ⚡ Local Only | Update local setting |
+| Change locale | ⚡ Local Only | Update local setting |
+| Save settings | ⚡ Local Only | Write to SharedPreferences |
+| Apply settings | ⚡ Local Only | Update UI |
+
+**Total: Settings management is completely offline**
+
+---
+
+### Notification Processing Flow - Network Requirements
+
+| Step | Network Required | Details |
+|------|-----------------|---------|
+| Receive notification | ⚡ Local Only | Android system notification |
+| Parse notification | ⚡ Local Only | Extract amount/description |
+| Show local notification | ⚡ Local Only | User prompt |
+| **Auto-add transaction** | **🌐 Internet Required** | **HTTP POST /api/v1/transactions** |
+| User taps notification | ⚡ Local Only | Open form |
+| Pre-fill form | ⚡ Local Only | Populate fields |
+
+**Total: Notification parsing is offline; auto-add requires internet**
+
+---
+
+### Cache Operations - Network Requirements
+
+| Operation | Network Required | Details |
+|-----------|-----------------|---------|
+| Read from cache | 💾 Offline Capable | Return cached data |
+| Write to cache | ⚡ Local Only | Update cache |
+| Invalidate cache | ⚡ Local Only | Mark as stale |
+| Clear cache | ⚡ Local Only | Delete all entries |
+| **Refresh cache** | **🌐 Internet Required** | **Fetch fresh data from server** |
+
+---
+
+### Complete Operations Matrix
+
+#### 🌐 Operations REQUIRING Internet
+
+1. **Authentication**
+   - Initial login
+   - Sign in from storage
+   - API version check
+   - Fetch server configuration
+
+2. **Data Synchronization**
+   - Load transactions (first time / cache miss)
+   - Create transaction
+   - Edit transaction
+   - Delete transaction
+   - Upload attachments
+   - Load accounts, categories, budgets, bills
+   - Search transactions
+   - Fetch account balances
+   - Load piggy banks
+
+3. **Real-time Updates**
+   - Pull to refresh
+   - Sync latest data
+   - Background data fetch
+
+#### 💾 Operations WORKING Offline (with cache)
+
+1. **Viewing Cached Data**
+   - Browse previously loaded transactions
+   - View cached account list
+   - View cached categories
+   - View cached bills
+   - View charts with cached data
+   - Open transaction details (if cached)
+
+2. **Navigation**
+   - Switch between tabs
+   - Open screens
+   - Browse UI
+
+3. **Draft Creation** (Limited)
+   - Fill transaction form
+   - Select from cached accounts/categories
+   - **Cannot submit until online**
+
+#### ⚡ Operations COMPLETELY Local
+
+1. **App Settings**
+   - Change theme (light/dark/system)
+   - Change language
+   - Enable/disable biometric lock
+   - Configure notification parsing
+   - Adjust dashboard layout
+   - Reorder dashboard cards
+
+2. **Security**
+   - Biometric authentication (fingerprint/face)
+   - App lock/unlock
+   - Screen timeout
+
+3. **Cache Management**
+   - Clear cache
+   - View cache status
+
+4. **UI Interactions**
+   - Form validation (client-side)
+   - Date/time picker
+   - Amount calculator
+   - Autocomplete (from cache)
+   - Filtering (cached data)
+   - Sorting (cached data)
+
+---
+
+### Network Error Handling
+
+#### When Internet is Unavailable:
+
+**What Happens:**
+- API calls fail with timeout/connection errors
+- App displays cached data if available
+- Create/edit operations cannot complete
+- Error messages: "No internet connection" or "Cannot reach server"
+
+**User Experience:**
+- ✅ Can browse previously loaded data
+- ✅ Can change app settings
+- ✅ Can fill transaction forms (but not submit)
+- ❌ Cannot load new data
+- ❌ Cannot submit transactions
+- ❌ Cannot sync with server
+- ❌ Cannot login (if not already logged in)
+
+**Best Practices:**
+1. Use app with internet connection for full functionality
+2. Browse cached data when offline
+3. Enable "show cached data" if available
+4. Draft transactions will be lost on app close (no offline queue)
+5. Always sync before going offline to ensure cache is fresh
+
+---
+
+### Cache Behavior & Limitations
+
+**Cache Lifetime:**
+- In-memory cache lives for current app session only
+- Cache cleared on logout
+- Cache cleared on app restart
+- No persistent offline storage (by design)
+
+**Cache Invalidation:**
+- Automatic on create/edit/delete operations
+- Manual via pull-to-refresh
+- Automatic on cache timeout (per query)
+
+**Offline Limitations:**
+- No offline queue for pending transactions
+- No background sync when offline
+- Draft transactions not saved on app close
+- Cache size limited by device memory
+
+---
+
 ## Summary
 
 This data flow documentation demonstrates:
 
-1. **Startup Flow**: Multi-stage initialization with settings load and optional biometric auth
-2. **Authentication**: Robust validation with version checking and error handling
-3. **Transaction Loading**: Two-level cache (IDs + objects) with stream-based updates
-4. **Transaction Creation**: Form validation → API call → cache invalidation → UI refresh
+1. **Startup Flow**: Multi-stage initialization with settings load and optional biometric auth (⚡ mostly local, 🌐 internet for sign-in)
+2. **Authentication**: Robust validation with version checking and error handling (🌐 requires internet)
+3. **Transaction Loading**: Two-level cache (IDs + objects) with stream-based updates (🌐 initial load, 💾 cached viewing)
+4. **Transaction Creation**: Form validation → API call → cache invalidation → UI refresh (🌐 requires internet)
+5. **Settings Management**: Bitmask-optimized storage with instant UI updates (⚡ completely local)
+6. **Notification Processing**: Parse banking notifications → auto-add or manual review (⚡ parsing local, 🌐 submission requires internet)
+7. **Cache Invalidation**: Strategic clearing based on data relationships (⚡ local operation)
+
+**Key Architectural Strengths:**
+- ✅ Clear unidirectional data flow (Action → API → Cache → UI)
+- ✅ Efficient caching with granular invalidation
+- ✅ Stream-based reactivity for real-time updates
+- ✅ Type-safe API integration with code generation
+- ✅ Separation of concerns (UI, business logic, data layer)
+- ✅ **Clear network boundaries** - users know when internet is needed
 5. **Settings Management**: Bitmask-optimized storage with instant UI updates
 6. **Notification Processing**: Parse banking notifications → auto-add or manual review
 7. **Cache Invalidation**: Strategic clearing based on data relationships

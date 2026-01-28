@@ -1,5 +1,15 @@
 # Waterfly III - Architecture Overview
 
+## Network Requirements Legend
+
+Throughout this document, the following icons indicate network requirements:
+
+- 🌐 **Internet Required** - Operation requires active internet connection to Firefly III server
+- 💾 **Offline Capable** - Operation works without internet using cached/local data
+- ⚡ **Local Only** - Operation is completely local (no network involved)
+
+---
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Technology Stack](#technology-stack)
@@ -10,6 +20,7 @@
 7. [Authentication Flow](#authentication-flow)
 8. [Key Components](#key-components)
 9. [Code Organization](#code-organization)
+10. [Network Requirements Summary](#network-requirements-summary)
 
 ---
 
@@ -293,7 +304,7 @@ UI Rebuild (context.watch/select)
 #### Example 1: Loading Transactions
 
 ```dart
-// 1. UI requests data
+// 1. UI requests data (⚡ Local Only)
 Consumer<FireflyService>(
   builder: (context, fireflyService, _) {
     return FutureBuilder(
@@ -303,57 +314,57 @@ Consumer<FireflyService>(
   },
 )
 
-// 2. TransStock checks cache
+// 2. TransStock checks cache (💾 Offline Capable if cached)
 Stock<String, List<String>> _getStock = Stock(
   fetcher: Fetcher.ofFuture((String id) {
-    // 3. Parse query parameters
+    // 3. Parse query parameters (⚡ Local Only)
     final query = _getOptions.fromJson(jsonDecode(id));
     
-    // 4. Make API call
+    // 4. Make API call (🌐 INTERNET REQUIRED)
     return api.v1TransactionsGet(
       page: query.page,
       limit: query.limit,
       start: query.start,
       end: query.end,
     ).then((response) {
-      // 5. Cache individual transactions
+      // 5. Cache individual transactions (⚡ Local Only)
       for (var transaction in response.body.data) {
         _singleSoT.write(transaction.id, transaction);
       }
       
-      // 6. Return list of IDs
+      // 6. Return list of IDs (⚡ Local Only)
       return response.body.data.map((e) => e.id).toList();
     });
   }),
   sourceOfTruth: _listSoT,
 );
 
-// 7. UI receives Stream<StockResponse<List<String>>>
-// 8. UI can then fetch individual transactions from _singleStock
+// 7. UI receives Stream<StockResponse<List<String>>> (⚡ Local Only)
+// 8. UI can then fetch individual transactions from _singleStock (💾 Offline Capable)
 ```
 
 #### Example 2: Creating a Transaction
 
 ```dart
-// 1. User submits form
+// 1. User submits form (⚡ Local Only)
 onPressed: () async {
-  // 2. Build transaction model
+  // 2. Build transaction model (⚡ Local Only)
   final transaction = TransactionStore(
     transactions: [TransactionSplit(...)],
   );
   
-  // 3. Direct API call (bypass cache)
+  // 3. Direct API call (🌐 INTERNET REQUIRED - bypass cache)
   final response = await context
     .read<FireflyService>()
     .api
     .v1TransactionsPost(body: transaction);
   
-  // 4. Check response
+  // 4. Check response (⚡ Local Only)
   if (response.isSuccessful) {
-    // 5. Invalidate cache to force refresh
+    // 5. Invalidate cache to force refresh (⚡ Local Only)
     context.read<FireflyService>().transStock.clear();
     
-    // 6. Navigate back
+    // 6. Navigate back (⚡ Local Only)
     Navigator.pop(context);
   }
 }
@@ -366,37 +377,37 @@ onPressed: () async {
 ### Sign-In Process
 
 ```
-LoginPage: User enters host URL + API key
+LoginPage: User enters host URL + API key (⚡ Local Only)
     ↓
-FireflyService.signIn(host, apiKey)
+FireflyService.signIn(host, apiKey) (⚡ Local Only - initiates process)
     ↓
 AuthUser.create(host, apiKey)
     ↓
-[Validation Step 1] Parse URL
+[Validation Step 1] Parse URL (⚡ Local Only)
     ↓ FormatException → throw AuthErrorHost
     ↓
-[Validation Step 2] HTTP GET /api/v1/about
+[Validation Step 2] 🌐 HTTP GET /api/v1/about (INTERNET REQUIRED)
     ↓ Content-Type: text/html → throw AuthErrorApiKey
     ↓ Status != 200 → throw AuthErrorStatusCode
     ↓
-[Validation Step 3] Parse SystemInfo JSON
+[Validation Step 3] Parse SystemInfo JSON (⚡ Local Only)
     ↓ FormatException → throw AuthErrorNoInstance
     ↓
-[Validation Step 4] Check API version
+[Validation Step 4] Check API version (⚡ Local Only)
     ↓ version < 6.3.2 → throw AuthErrorVersionTooLow
     ↓
-AuthUser object created
+AuthUser object created (⚡ Local Only)
     ↓
 FireflyService initialization:
-  - Fetch default currency
-  - Fetch server timezone
-  - Initialize TransStock cache
-  - Store credentials in secure storage
-  - Set _signedIn = true
+  - 🌐 Fetch default currency (INTERNET REQUIRED)
+  - 🌐 Fetch server timezone (INTERNET REQUIRED)
+  - Initialize TransStock cache (⚡ Local Only)
+  - Store credentials in secure storage (⚡ Local Only)
+  - Set _signedIn = true (⚡ Local Only)
     ↓
-notifyListeners() → UI updates
+notifyListeners() → UI updates (⚡ Local Only)
     ↓
-MaterialApp shows NavPage (home)
+MaterialApp shows NavPage (home) (⚡ Local Only)
 ```
 
 ### API Request Authentication
@@ -828,6 +839,110 @@ flutter test
 - [Chopper Documentation](https://pub.dev/packages/chopper)
 - [Stock Library](https://pub.dev/packages/stock)
 - [Material 3 Design](https://m3.material.io/)
+
+---
+
+## Network Requirements Summary
+
+### Operations Requiring Internet Connection (🌐)
+
+The following operations **require active internet connection** to the Firefly III server:
+
+1. **Authentication & Sign In**
+   - Initial login validation (`/api/v1/about`)
+   - API version check
+   - Fetching default currency
+   - Fetching server timezone
+
+2. **Data Synchronization**
+   - Loading transactions from server
+   - Creating new transactions
+   - Editing existing transactions
+   - Deleting transactions
+   - Loading accounts, categories, budgets, bills
+   - Uploading attachments
+
+3. **Real-time Updates**
+   - Fetching latest account balances
+   - Syncing budget information
+   - Loading bill details
+   - Searching transactions on server
+
+4. **Settings Sync**
+   - Fetching server configuration
+   - Loading currency information
+   - Fetching tag lists
+   - Loading piggy bank data
+
+### Offline Capable Operations (💾)
+
+These operations work **without internet** if data is already cached:
+
+1. **Viewing Cached Data**
+   - Browsing previously loaded transactions
+   - Viewing cached account balances
+   - Viewing cached categories and tags
+   - Viewing cached bills and budgets
+
+2. **Navigation & UI**
+   - Switching between tabs
+   - Opening cached transaction details
+   - Viewing charts with cached data
+   - Browsing cached accounts
+
+3. **Draft Creation** (Limited)
+   - Filling transaction forms (saved locally)
+   - Selecting from cached accounts/categories
+   - **Note:** Cannot submit until internet available
+
+### Local-Only Operations (⚡)
+
+These operations **never require internet**:
+
+1. **App Settings**
+   - Changing theme (light/dark/system)
+   - Changing language
+   - Enabling/disabling biometric lock
+   - Configuring notification settings
+   - Adjusting dashboard layout
+
+2. **Security**
+   - Biometric authentication
+   - App lock/unlock
+   - Viewing stored credentials (encrypted)
+
+3. **Cache Management**
+   - Clearing cache
+   - Invalidating cached data
+
+4. **UI Interactions**
+   - Form validation
+   - Date picker
+   - Amount calculator
+   - Autocomplete (from cache)
+
+### Cache Behavior
+
+**Cache Lifetime:**
+- In-memory cache lives for app session only
+- Cache cleared on logout
+- No persistent offline storage
+- Fresh data fetched on app restart
+
+**Best Practices:**
+- Use app with internet connection for best experience
+- Browse cached data when offline
+- Draft transactions are lost on app close (no offline draft storage)
+- Internet required for any data modifications
+
+### Network Error Handling
+
+When internet is unavailable:
+- API calls fail with timeout or connection error
+- App shows cached data if available
+- Error messages indicate "No internet connection"
+- Users can continue browsing cached data
+- Submit operations queued/deferred until connection restored
 
 ---
 

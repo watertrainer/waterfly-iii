@@ -4,6 +4,12 @@ This is a quick reference guide to the Waterfly III architecture. For detailed i
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Complete architecture documentation
 - **[DATA_FLOW.md](DATA_FLOW.md)** - Detailed data flow diagrams
 
+## Network Requirements Legend
+
+- 🌐 **Internet Required** - Operation requires active connection to Firefly III server
+- 💾 **Offline Capable** - Works with cached data (no internet needed)
+- ⚡ **Local Only** - Completely local (never requires internet)
+
 ---
 
 ## What is Waterfly III?
@@ -112,27 +118,27 @@ transStock.stream(queryKey).listen((response) {
 ## Data Flow Overview
 
 ```
-User Action
+User Action (⚡ Local)
     ↓
-Provider (FireflyService)
+Provider (FireflyService) (⚡ Local)
     ↓
-Stock Cache (check)
+Stock Cache (check) (💾 Offline if cached)
     ↓ (cache miss)
-API Client (Chopper)
+API Client (Chopper) (⚡ Local setup)
     ↓
-HTTP Request (with auth interceptor)
+🌐 HTTP Request (INTERNET REQUIRED)
     ↓
-Firefly III Server
+🌐 Firefly III Server (INTERNET REQUIRED)
     ↓
-Response (JSON)
+Response (JSON) (🌐 Network)
     ↓
-Swagger Models (deserialize)
+Swagger Models (deserialize) (⚡ Local)
     ↓
-Cache Update (SourceOfTruth)
+Cache Update (SourceOfTruth) (⚡ Local)
     ↓
-notifyListeners()
+notifyListeners() (⚡ Local)
     ↓
-UI Rebuild (StreamBuilder/Consumer)
+UI Rebuild (⚡ Local)
 ```
 
 ---
@@ -180,6 +186,7 @@ UI Rebuild (StreamBuilder/Consumer)
 
 ### Load Transactions
 ```dart
+// 💾 Offline Capable if cached, 🌐 Internet Required for fresh data
 final stream = context
   .read<FireflyService>()
   .transStock
@@ -197,6 +204,7 @@ StreamBuilder<StockResponse>(
 
 ### Create Transaction
 ```dart
+// 🌐 INTERNET REQUIRED - Cannot work offline
 final transaction = TransactionStore(...);
 final response = await context
   .read<FireflyService>()
@@ -204,7 +212,7 @@ final response = await context
   .v1TransactionsPost(body: transaction);
 
 if (response.isSuccessful) {
-  // Clear cache to force refresh
+  // Clear cache to force refresh (⚡ Local)
   context.read<FireflyService>().transStock.clear();
   Navigator.pop(context);
 }
@@ -212,6 +220,7 @@ if (response.isSuccessful) {
 
 ### Change Setting
 ```dart
+// ⚡ LOCAL ONLY - Works completely offline
 await context
   .read<SettingsProvider>()
   .setTheme(ThemeMode.dark);
@@ -371,24 +380,105 @@ flutter test
 
 ---
 
+## Network Requirements
+
+### Operations Requiring Internet (🌐)
+
+**Authentication & Setup:**
+- Initial login and validation
+- Sign in from stored credentials
+- API version checking
+- Fetching server configuration
+
+**Data Operations:**
+- Creating transactions
+- Editing transactions
+- Deleting transactions
+- Loading fresh data from server
+- Uploading attachments
+- Searching transactions
+- Syncing account balances
+- Loading bills, categories, accounts
+
+### Offline Capable Operations (💾)
+
+**Viewing Cached Data:**
+- Browsing previously loaded transactions
+- Viewing cached account balances
+- Viewing cached categories/tags
+- Viewing cached bills/budgets
+- Chart rendering (with cached data)
+
+**Limited Functionality:**
+- Can fill transaction forms
+- Can select from cached data
+- **Cannot submit without internet**
+
+### Local-Only Operations (⚡)
+
+**App Settings:**
+- Theme switching (light/dark/system)
+- Language selection
+- Biometric lock toggle
+- Notification configuration
+- Dashboard layout customization
+
+**Security:**
+- Biometric authentication
+- App lock/unlock
+
+**Cache:**
+- Clearing cache
+- Viewing cache status
+
+### Best Practices
+
+**For Best Experience:**
+- ✅ Use with internet connection
+- ✅ Sync data regularly
+- ✅ Enable caching for offline viewing
+- ⚠️ Draft transactions not saved offline
+- ⚠️ Cache cleared on app restart
+
+**When Offline:**
+- ✅ Browse cached data
+- ✅ Change app settings
+- ❌ Cannot create/edit transactions
+- ❌ Cannot load new data
+- ❌ Cannot sync with server
+
+---
+
 ## Quick Troubleshooting
 
 ### "Invalid API key" error
 - Check API key in Firefly III web interface
 - Ensure URL is correct (no trailing slash)
-- Verify network connectivity
+- **🌐 Verify network connectivity**
+- Check firewall/proxy settings
 
 ### "API version too low"
 - Upgrade Firefly III to 6.3.2+
-- Check server version at `/api/v1/about`
+- **🌐 Check server version at /api/v1/about**
+- Contact server administrator
 
 ### Cache not updating
+- **🌐 Ensure internet connection active**
 - Pull to refresh on lists
 - Or call `transStock.clear()` to force refresh
+- Check if server is reachable
 
 ### Authentication loop
 - Clear app data
+- **🌐 Verify internet connection**
 - Sign in again with fresh credentials
+- Check server is accessible
+
+### Cannot submit transaction
+- **🌐 Check internet connection - required for submission**
+- Verify server is online
+- Check API key hasn't expired
+- Review firewall/network settings
 
 ---
 
