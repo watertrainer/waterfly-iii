@@ -799,13 +799,19 @@ class _HomeTransactionsState extends State<HomeTransactions>
                       final ScaffoldMessengerState msg =
                           ScaffoldMessenger.of(context);
                       final String transactionJson = jsonEncode(item.toJson());
-                      await settings.addBookmarkedTransaction(transactionJson);
-                      msg.showSnackBar(
-                        SnackBar(
-                          content: Text(S.of(context).transactionBookmarkAdded),
-                          behavior: SnackBarBehavior.floating,
-                        ),
+                      await settings.addBookmarkedTransaction(
+                        transactionJson,
+                        item.id,
                       );
+                      if (context.mounted) {
+                        msg.showSnackBar(
+                          SnackBar(
+                            content:
+                                Text(S.of(context).transactionBookmarkAdded),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     },
                     child: Row(
                       children: <Widget>[

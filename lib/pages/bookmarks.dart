@@ -44,13 +44,11 @@ class _BookmarksPageState extends State<BookmarksPage> {
   Future<void> _sendBookmarkedTransaction(
     BuildContext context,
     TransactionRead transaction,
-    int index,
   ) async {
     final FireflyIii api = context.read<FireflyService>().api;
     final TimeZoneHandler tzHandler = context.read<FireflyService>().tzHandler;
     final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
     final S l10n = S.of(context);
-    final SettingsProvider settings = context.read<SettingsProvider>();
 
     try {
       // Get the current date/time
@@ -96,28 +94,29 @@ class _BookmarksPageState extends State<BookmarksPage> {
       if (context.mounted) {
         // Refresh stock
         context.read<FireflyService>().transStock?.clear();
+        msg.showSnackBar(
+          SnackBar(
+            content: Text(l10n.transactionBookmarkSent),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
-
-      msg.showSnackBar(
-        SnackBar(
-          content: Text(l10n.transactionBookmarkSent),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     } catch (e, stackTrace) {
       log.severe("Error sending bookmarked transaction", e, stackTrace);
-      msg.showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (context.mounted) {
+        msg.showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _deleteBookmark(
     BuildContext context,
-    int index,
+    String transactionId,
   ) async {
     final S l10n = S.of(context);
     final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
@@ -142,8 +141,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
       ),
     );
 
-    if (confirmed == true) {
-      await settings.removeBookmarkedTransaction(index);
+    if (confirmed == true && context.mounted) {
+      await settings.removeBookmarkedTransactionById(transactionId);
       msg.showSnackBar(
         SnackBar(
           content: Text(l10n.transactionBookmarkRemoved),
@@ -176,32 +175,28 @@ class _BookmarksPageState extends State<BookmarksPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: () => Future<void>.sync(() {
-        setState(() {});
-      }),
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        itemCount: bookmarks.length,
-        itemBuilder: (BuildContext context, int index) {
-          try {
-            final TransactionRead transaction = TransactionRead.fromJson(
-              jsonDecode(bookmarks[index]),
-            );
-            return _buildBookmarkCard(context, transaction, index);
-          } catch (e) {
-            log.warning("Failed to parse bookmark at index $index", e);
-            return const SizedBox.shrink();
-          }
-        },
-      ),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      itemCount: bookmarks.length,
+      itemBuilder: (BuildContext context, int index) {
+        try {
+          final TransactionRead transaction = TransactionRead.fromJson(
+            jsonDecode(bookmarks[index]),
+          );
+          return _buildBookmarkCard(context, transaction);
+        } catch (e) {
+          log.warning("Failed to parse bookmark at index $index", e);
+          // Remove corrupted bookmark
+          context.read<SettingsProvider>().removeBookmarkedTransaction(index);
+          return const SizedBox.shrink();
+        }
+      },
     );
   }
 
   Widget _buildBookmarkCard(
     BuildContext context,
     TransactionRead transaction,
-    int index,
   ) {
     final List<TransactionSplit> transactions =
         transaction.attributes.transactions;
@@ -287,7 +282,6 @@ class _BookmarksPageState extends State<BookmarksPage> {
                 value: () => _sendBookmarkedTransaction(
                   context,
                   transaction,
-                  index,
                 ),
                 child: Row(
                   children: <Widget>[
@@ -299,7 +293,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
               ),
               const PopupMenuDivider(),
               PopupMenuItem<Function>(
-                value: () => _deleteBookmark(context, index),
+                value: () => _deleteBookmark(context, transaction.id),
                 child: Row(
                   children: <Widget>[
                     const Icon(Icons.bookmark_remove),
@@ -311,7 +305,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
             ],
             clipBehavior: Clip.hardEdge,
           );
-          if (func != null) {
+          if (func != null && context.mounted) {
             func();
           }
         },
@@ -381,14 +375,13 @@ class _BookmarksPageState extends State<BookmarksPage> {
                         onPressed: () => _sendBookmarkedTransaction(
                           context,
                           transaction,
-                          index,
                         ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.bookmark_remove),
                         tooltip:
                             MaterialLocalizations.of(context).deleteButtonTooltip,
-                        onPressed: () => _deleteBookmark(context, index),
+                        onPressed: () => _deleteBookmark(context, transaction.id),
                       ),
                     ],
                   ),

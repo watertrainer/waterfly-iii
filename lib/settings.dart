@@ -783,9 +783,11 @@ class SettingsProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addBookmarkedTransaction(String transactionJson) async {
-    if (transactionJson.isEmpty ||
-        _bookmarkedTransactions.contains(transactionJson)) {
+  Future<void> addBookmarkedTransaction(
+    String transactionJson,
+    String transactionId,
+  ) async {
+    if (transactionJson.isEmpty || isTransactionBookmarked(transactionId)) {
       return;
     }
 
@@ -812,6 +814,27 @@ class SettingsProvider with ChangeNotifier {
 
     log.finest(() => "notify SettingsProvider->removeBookmarkedTransaction()");
     notifyListeners();
+  }
+
+  Future<void> removeBookmarkedTransactionById(String transactionId) async {
+    if (transactionId.isEmpty) {
+      return;
+    }
+
+    final int index = _bookmarkedTransactions.indexWhere(
+      (String json) => json.contains('"id":"$transactionId"'),
+    );
+
+    if (index >= 0) {
+      await removeBookmarkedTransaction(index);
+    }
+  }
+
+  /// Checks if a transaction is already bookmarked by its ID
+  bool isTransactionBookmarked(String transactionId) {
+    return _bookmarkedTransactions.any(
+      (String json) => json.contains('"id":"$transactionId"'),
+    );
   }
 }
 
