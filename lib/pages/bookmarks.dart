@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:chopper/chopper.dart' show Response;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:waterflyiii/auth.dart';
@@ -147,7 +146,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
           ),
     );
 
-    if (confirmed == true && context.mounted) {
+    if ((confirmed ?? false) && context.mounted) {
       await settings.removeBookmarkedTransactionById(transactionId);
       msg.showSnackBar(
         SnackBar(

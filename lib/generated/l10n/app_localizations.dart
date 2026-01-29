@@ -1074,6 +1074,12 @@ abstract class S {
   /// **'Subscriptions'**
   String get navigationBills;
 
+  /// Navigation Label: Bookmarks Page
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get navigationBookmarks;
+
   /// Navigation Label: Categories
   ///
   /// In en, this message translates to:
@@ -1445,6 +1451,54 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Duplicate'**
   String get transactionDuplicate;
+
+  /// Menu Label: Bookmark a transaction
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark'**
+  String get transactionBookmark;
+
+  /// Snackbar message when a transaction is bookmarked
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction bookmarked'**
+  String get transactionBookmarkAdded;
+
+  /// Snackbar message when a bookmark is removed
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark removed'**
+  String get transactionBookmarkRemoved;
+
+  /// Button label: Send bookmarked transaction with current date
+  ///
+  /// In en, this message translates to:
+  /// **'Send Now'**
+  String get transactionBookmarkSendNow;
+
+  /// Snackbar message when a bookmarked transaction is sent
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction created successfully'**
+  String get transactionBookmarkSent;
+
+  /// Page title: Bookmarks page
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks'**
+  String get bookmarksPageTitle;
+
+  /// Message when there are no bookmarked transactions
+  ///
+  /// In en, this message translates to:
+  /// **'No bookmarked transactions'**
+  String get bookmarksPageEmpty;
+
+  /// Confirmation dialog message for deleting a bookmark
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove this bookmark?'**
+  String get bookmarksDeleteConfirm;
 
   /// Transaction Save Error: Invalid account
   ///
