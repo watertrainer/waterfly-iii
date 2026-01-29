@@ -796,8 +796,9 @@ class _HomeTransactionsState extends State<HomeTransactions>
                     value: () async {
                       final SettingsProvider settings =
                           context.read<SettingsProvider>();
-                      final ScaffoldMessengerState msg =
-                          ScaffoldMessenger.of(context);
+                      final ScaffoldMessengerState msg = ScaffoldMessenger.of(
+                        context,
+                      );
                       final String transactionJson = jsonEncode(item.toJson());
                       await settings.addBookmarkedTransaction(
                         transactionJson,
@@ -806,8 +807,9 @@ class _HomeTransactionsState extends State<HomeTransactions>
                       if (context.mounted) {
                         msg.showSnackBar(
                           SnackBar(
-                            content:
-                                Text(S.of(context).transactionBookmarkAdded),
+                            content: Text(
+                              S.of(context).transactionBookmarkAdded,
+                            ),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );

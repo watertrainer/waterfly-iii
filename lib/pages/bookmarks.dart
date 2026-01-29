@@ -87,8 +87,9 @@ class _BookmarksPageState extends State<BookmarksPage> {
         transactions: splits,
       );
 
-      final Response<TransactionSingle> response =
-          await api.v1TransactionsPost(body: newTx);
+      final Response<TransactionSingle> response = await api.v1TransactionsPost(
+        body: newTx,
+      );
       apiThrowErrorIfEmpty(response, context.mounted ? context : null);
 
       if (context.mounted) {
@@ -124,21 +125,26 @@ class _BookmarksPageState extends State<BookmarksPage> {
 
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        icon: const Icon(Icons.bookmark_remove),
-        title: Text(MaterialLocalizations.of(context).deleteButtonTooltip),
-        content: Text(l10n.bookmarksDeleteConfirm),
-        actions: <Widget>[
-          TextButton(
-            child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
-            onPressed: () => Navigator.of(context).pop(false),
+      builder:
+          (BuildContext context) => AlertDialog(
+            icon: const Icon(Icons.bookmark_remove),
+            title: Text(MaterialLocalizations.of(context).deleteButtonTooltip),
+            content: Text(l10n.bookmarksDeleteConfirm),
+            actions: <Widget>[
+              TextButton(
+                child: Text(
+                  MaterialLocalizations.of(context).cancelButtonLabel,
+                ),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              FilledButton(
+                child: Text(
+                  MaterialLocalizations.of(context).deleteButtonTooltip,
+                ),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
           ),
-          FilledButton(
-            child: Text(MaterialLocalizations.of(context).deleteButtonTooltip),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true && context.mounted) {
@@ -194,10 +200,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
     );
   }
 
-  Widget _buildBookmarkCard(
-    BuildContext context,
-    TransactionRead transaction,
-  ) {
+  Widget _buildBookmarkCard(BuildContext context, TransactionRead transaction) {
     final List<TransactionSplit> transactions =
         transaction.attributes.transactions;
     if (transactions.isEmpty) {
@@ -256,10 +259,9 @@ class _BookmarksPageState extends State<BookmarksPage> {
           // Open transaction page for editing/viewing
           Navigator.of(context).push(
             MaterialPageRoute<bool>(
-              builder: (BuildContext context) => TransactionPage(
-                transaction: transaction,
-                clone: true,
-              ),
+              builder:
+                  (BuildContext context) =>
+                      TransactionPage(transaction: transaction, clone: true),
             ),
           );
         },
@@ -279,10 +281,7 @@ class _BookmarksPageState extends State<BookmarksPage> {
             ),
             items: <PopupMenuEntry<Function>>[
               PopupMenuItem<Function>(
-                value: () => _sendBookmarkedTransaction(
-                  context,
-                  transaction,
-                ),
+                value: () => _sendBookmarkedTransaction(context, transaction),
                 child: Row(
                   children: <Widget>[
                     const Icon(Icons.send),
@@ -344,8 +343,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
                       Text(
                         category,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontStyle: FontStyle.italic,
-                            ),
+                          fontStyle: FontStyle.italic,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -359,11 +358,11 @@ class _BookmarksPageState extends State<BookmarksPage> {
                   Text(
                     currency.fmt(amount),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: firstTx.type.color,
-                          fontFeatures: const <FontFeature>[
-                            FontFeature.tabularFigures(),
-                          ],
-                        ),
+                      color: firstTx.type.color,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -372,16 +371,20 @@ class _BookmarksPageState extends State<BookmarksPage> {
                       IconButton(
                         icon: const Icon(Icons.send),
                         tooltip: S.of(context).transactionBookmarkSendNow,
-                        onPressed: () => _sendBookmarkedTransaction(
-                          context,
-                          transaction,
-                        ),
+                        onPressed:
+                            () => _sendBookmarkedTransaction(
+                              context,
+                              transaction,
+                            ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.bookmark_remove),
                         tooltip:
-                            MaterialLocalizations.of(context).deleteButtonTooltip,
-                        onPressed: () => _deleteBookmark(context, transaction.id),
+                            MaterialLocalizations.of(
+                              context,
+                            ).deleteButtonTooltip,
+                        onPressed:
+                            () => _deleteBookmark(context, transaction.id),
                       ),
                     ],
                   ),
