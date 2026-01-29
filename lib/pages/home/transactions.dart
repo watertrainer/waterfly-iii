@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:animations/animations.dart';
 import 'package:chopper/chopper.dart' show Response;
@@ -788,6 +789,29 @@ class _HomeTransactionsState extends State<HomeTransactions>
                         const Icon(Icons.copy),
                         const SizedBox(width: 12),
                         Text(S.of(context).transactionDuplicate),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem<Function>(
+                    value: () async {
+                      final SettingsProvider settings =
+                          context.read<SettingsProvider>();
+                      final ScaffoldMessengerState msg =
+                          ScaffoldMessenger.of(context);
+                      final String transactionJson = jsonEncode(item.toJson());
+                      await settings.addBookmarkedTransaction(transactionJson);
+                      msg.showSnackBar(
+                        SnackBar(
+                          content: Text(S.of(context).transactionBookmarkAdded),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: <Widget>[
+                        const Icon(Icons.bookmark_add),
+                        const SizedBox(width: 12),
+                        Text(S.of(context).transactionBookmark),
                       ],
                     ),
                   ),

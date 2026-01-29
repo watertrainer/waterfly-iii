@@ -144,6 +144,7 @@ class SettingsProvider with ChangeNotifier {
   static const String settingsDashboardOrder = "DASHBOARD_ORDER";
   static const String settingsDashboardHidden = "DASHBOARD_HIDDEN";
   static const String settingTransactionDateFilter = "TX_DATE_FILTER";
+  static const String settingBookmarkedTransactions = "BOOKMARKED_TXS";
 
   bool get debug => _loaded ? _boolSettings[BoolSettings.debug] : false;
   bool get lock => _loaded ? _boolSettings[BoolSettings.lock] : false;
@@ -197,6 +198,9 @@ class SettingsProvider with ChangeNotifier {
   TransactionDateFilter _transactionDateFilter = TransactionDateFilter.all;
 
   TransactionDateFilter get transactionDateFilter => _transactionDateFilter;
+
+  List<String> _bookmarkedTransactions = <String>[];
+  List<String> get bookmarkedTransactions => _bookmarkedTransactions;
 
   Future<void> migrateLegacy(SharedPreferencesAsync prefs) async {
     log.config("trying to migrate old prefs");
@@ -413,6 +417,10 @@ class SettingsProvider with ChangeNotifier {
         txDateFilterIndex == null
             ? TransactionDateFilter.all
             : TransactionDateFilter.values[txDateFilterIndex];
+
+    // Load bookmarked transactions
+    _bookmarkedTransactions =
+        await prefs.getStringList(settingBookmarkedTransactions) ?? <String>[];
 
     _loaded = _loading = true;
     log.finest(() => "notify SettingsProvider->loadSettings()");
@@ -772,6 +780,37 @@ class SettingsProvider with ChangeNotifier {
     );
 
     log.finest(() => "notify SettingsProvider->setTransactionDateFilter()");
+    notifyListeners();
+  }
+
+  Future<void> addBookmarkedTransaction(String transactionJson) async {
+    if (transactionJson.isEmpty ||
+        _bookmarkedTransactions.contains(transactionJson)) {
+      return;
+    }
+
+    _bookmarkedTransactions.add(transactionJson);
+    await SharedPreferencesAsync().setStringList(
+      settingBookmarkedTransactions,
+      _bookmarkedTransactions,
+    );
+
+    log.finest(() => "notify SettingsProvider->addBookmarkedTransaction()");
+    notifyListeners();
+  }
+
+  Future<void> removeBookmarkedTransaction(int index) async {
+    if (index < 0 || index >= _bookmarkedTransactions.length) {
+      return;
+    }
+
+    _bookmarkedTransactions.removeAt(index);
+    await SharedPreferencesAsync().setStringList(
+      settingBookmarkedTransactions,
+      _bookmarkedTransactions,
+    );
+
+    log.finest(() => "notify SettingsProvider->removeBookmarkedTransaction()");
     notifyListeners();
   }
 }
