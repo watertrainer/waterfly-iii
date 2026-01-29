@@ -821,6 +821,10 @@
     "@navigationBills": {
         "description": "Navigation Label: Subscriptions"
     },
+    "navigationBookmarks": "Bookmarks",
+    "@navigationBookmarks": {
+        "description": "Navigation Label: Bookmarks Page"
+    },
     "navigationCategories": "Categories",
     "@navigationCategories": {
         "description": "Navigation Label: Categories"
@@ -1112,6 +1116,38 @@
     "transactionDuplicate": "Duplicate",
     "@transactionDuplicate": {
         "description": "Menu Label: Duplicate item"
+    },
+    "transactionBookmark": "Bookmark",
+    "@transactionBookmark": {
+        "description": "Menu Label: Bookmark a transaction"
+    },
+    "transactionBookmarkAdded": "Transaction bookmarked",
+    "@transactionBookmarkAdded": {
+        "description": "Snackbar message when a transaction is bookmarked"
+    },
+    "transactionBookmarkRemoved": "Bookmark removed",
+    "@transactionBookmarkRemoved": {
+        "description": "Snackbar message when a bookmark is removed"
+    },
+    "transactionBookmarkSendNow": "Send Now",
+    "@transactionBookmarkSendNow": {
+        "description": "Button label: Send bookmarked transaction with current date"
+    },
+    "transactionBookmarkSent": "Transaction created successfully",
+    "@transactionBookmarkSent": {
+        "description": "Snackbar message when a bookmarked transaction is sent"
+    },
+    "bookmarksPageTitle": "Bookmarks",
+    "@bookmarksPageTitle": {
+        "description": "Page title: Bookmarks page"
+    },
+    "bookmarksPageEmpty": "No bookmarked transactions",
+    "@bookmarksPageEmpty": {
+        "description": "Message when there are no bookmarked transactions"
+    },
+    "bookmarksDeleteConfirm": "Are you sure you want to remove this bookmark?",
+    "@bookmarksDeleteConfirm": {
+        "description": "Confirmation dialog message for deleting a bookmark"
     },
     "transactionErrorInvalidAccount": "Invalid Account",
     "@transactionErrorInvalidAccount": {

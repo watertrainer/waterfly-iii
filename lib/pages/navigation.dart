@@ -6,6 +6,7 @@ import 'package:waterflyiii/auth.dart';
 import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/pages/accounts.dart';
 import 'package:waterflyiii/pages/bills.dart';
+import 'package:waterflyiii/pages/bookmarks.dart';
 import 'package:waterflyiii/pages/categories.dart';
 import 'package:waterflyiii/pages/home.dart';
 import 'package:waterflyiii/pages/settings.dart';
@@ -121,6 +122,12 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
         const BillsPage(),
         const Icon(Icons.receipt_outlined),
         const Icon(Icons.receipt),
+      ),
+      NavDestination(
+        S.of(context).navigationBookmarks,
+        const BookmarksPage(),
+        const Icon(Icons.bookmark_border),
+        const Icon(Icons.bookmark),
       ),
       NavDestination(
         S.of(context).generalSettings,

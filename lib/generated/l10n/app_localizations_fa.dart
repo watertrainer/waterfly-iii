@@ -632,6 +632,9 @@ class SFa extends S {
   String get navigationBills => 'صورت حساب';
 
   @override
+  String get navigationBookmarks => 'Bookmarks';
+
+  @override
   String get navigationCategories => 'دسته\n';
 
   @override
@@ -860,6 +863,31 @@ class SFa extends S {
 
   @override
   String get transactionDuplicate => 'کپی کردن';
+
+  @override
+  String get transactionBookmark => 'Bookmark';
+
+  @override
+  String get transactionBookmarkAdded => 'Transaction bookmarked';
+
+  @override
+  String get transactionBookmarkRemoved => 'Bookmark removed';
+
+  @override
+  String get transactionBookmarkSendNow => 'Send Now';
+
+  @override
+  String get transactionBookmarkSent => 'Transaction created successfully';
+
+  @override
+  String get bookmarksPageTitle => 'Bookmarks';
+
+  @override
+  String get bookmarksPageEmpty => 'No bookmarked transactions';
+
+  @override
+  String get bookmarksDeleteConfirm =>
+      'Are you sure you want to remove this bookmark?';
 
   @override
   String get transactionErrorInvalidAccount => 'حساب نامعتبر';
