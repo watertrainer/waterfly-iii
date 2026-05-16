@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:version/version.dart';
-
 import 'package:waterflyiii/animations.dart';
 import 'package:waterflyiii/auth.dart';
+import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/pages/accounts.dart';
 import 'package:waterflyiii/pages/bills.dart';
+import 'package:waterflyiii/pages/bookmarks.dart';
 import 'package:waterflyiii/pages/categories.dart';
 import 'package:waterflyiii/pages/home.dart';
 import 'package:waterflyiii/pages/settings.dart';
@@ -125,20 +124,18 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
         const Icon(Icons.receipt),
       ),
       NavDestination(
-        S.of(context).navigationSettings,
+        S.of(context).navigationBookmarks,
+        const BookmarksPage(),
+        const Icon(Icons.bookmark_border),
+        const Icon(Icons.bookmark),
+      ),
+      NavDestination(
+        S.of(context).generalSettings,
         const SettingsPage(),
         const Icon(Icons.settings_outlined),
         const Icon(Icons.settings),
       ),
     ];
-
-    // Bills page not working below Firefly 6.1.0 (API Version 2.0.12)
-    // https://github.com/firefly-iii/firefly-iii/issues/8106
-    if (context.read<FireflyService>().apiVersion! < Version(2, 0, 12)) {
-      navDestinations.removeWhere(
-        (NavDestination e) => e.label == S.of(context).navigationBills,
-      );
-    }
 
     _tabController = TabController(vsync: this, length: navDestinations.length);
   }
@@ -157,92 +154,110 @@ class NavPageState extends State<NavPage> with TickerProviderStateMixin {
 
     return ChangeNotifierProvider<NavPageElements>(
       create: (_) => NavPageElements(Text(navDestinations[0].label)),
-      builder: (BuildContext context, _) => Scaffold(
-        appBar: AppBar(
-          title: context.select((NavPageElements n) => n.appBarTitle),
-          actions: context.select((NavPageElements n) => n.appBarActions),
-          bottom: context.select((NavPageElements n) => n.appBarBottom),
-        ),
-        drawer: NavigationDrawer(
-          selectedIndex: screenIndex,
-          onDestinationSelected: (int index) {
-            Navigator.pop(context); // closes the drawer
-            if (screenIndex == index) {
-              return;
-            }
-            context.read<NavPageElements>().appBarActions = null;
-            context.read<NavPageElements>().appBarBottom = null;
-            context.read<NavPageElements>().fab = null;
-            context.read<NavPageElements>().appBarTitle =
-                Text(navDestinations[index].label);
-            setState(() {
-              screenIndex = index;
-            });
-          },
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              child: Text(
-                'Waterfly III',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+      builder:
+          (BuildContext context, _) => Scaffold(
+            appBar: AppBar(
+              title: context.select((NavPageElements n) => n.appBarTitle),
+              actions: context.select((NavPageElements n) => n.appBarActions),
+              bottom: context.select((NavPageElements n) => n.appBarBottom),
             ),
-            ...navDestinations.map((NavDestination destination) {
-              return NavigationDrawerDestination(
-                label: Text(destination.label),
-                icon: destination.icon,
-                selectedIcon: destination.selectedIcon,
-              );
-            }),
-            const Divider(indent: 28, endIndent: 28),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-              child: GestureDetector(
-                onTap: () async {
-                  final FireflyService ff = context.read<FireflyService>();
-                  bool? ok = await showDialog<bool>(
-                    context: context,
-                    builder: (BuildContext context) =>
-                        const LogoutConfirmDialog(),
+            drawer: NavigationDrawer(
+              selectedIndex: screenIndex,
+              onDestinationSelected: (int index) {
+                Navigator.pop(context); // closes the drawer
+                if (screenIndex == index) {
+                  return;
+                }
+                if (navDestinations[index].pageHandler is SettingsPage) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder:
+                          (BuildContext context) => Scaffold(
+                            appBar: AppBar(
+                              title: Text(navDestinations[index].label),
+                            ),
+                            body: const SettingsPage(),
+                          ),
+                    ),
                   );
-                  if (!(ok ?? false)) {
-                    return;
-                  }
-
-                  ff.signOut();
-                },
-                child: Text(
-                  S.of(context).formButtonLogout,
-                  style: Theme.of(context).textTheme.labelMedium,
+                } else {
+                  context.read<NavPageElements>().appBarActions = null;
+                  context.read<NavPageElements>().appBarBottom = null;
+                  context.read<NavPageElements>().fab = null;
+                  context.read<NavPageElements>().appBarTitle = Text(
+                    navDestinations[index].label,
+                  );
+                  setState(() {
+                    screenIndex = index;
+                  });
+                }
+              },
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
+                  child: Text(
+                    'Waterfly III',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
-              ),
-            )
-          ],
-        ),
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 100),
-          switchInCurve: animCurveStandard,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return FadeTransition(
-              opacity: Tween<double>(
-                begin: 0,
-                end: 1,
-              ).animate(animation),
-              child: child,
-            );
-          },
-          child: currentPage.pageHandler,
-        ),
-        floatingActionButton: context.select((NavPageElements n) => n.fab),
-      ),
+                ...navDestinations.map((NavDestination destination) {
+                  return NavigationDrawerDestination(
+                    label: Text(destination.label),
+                    icon: destination.icon,
+                    selectedIcon: destination.selectedIcon,
+                  );
+                }),
+                const Divider(indent: 28, endIndent: 28),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 16,
+                  ),
+                  child: GestureDetector(
+                    onTap: () async {
+                      final FireflyService ff = context.read<FireflyService>();
+                      final bool? ok = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (BuildContext context) =>
+                                const LogoutConfirmDialog(),
+                      );
+                      if (!(ok ?? false)) {
+                        return;
+                      }
+
+                      await ff.signOut();
+                    },
+                    child: Text(
+                      S.of(context).formButtonLogout,
+                      style: Theme.of(context).textTheme.labelMedium,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            body: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 100),
+              switchInCurve: animCurveStandard,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: Tween<double>(begin: 0, end: 1).animate(animation),
+                  child: child,
+                );
+              },
+              child: currentPage.pageHandler,
+            ),
+            floatingActionButton: context.select((NavPageElements n) => n.fab),
+          ),
     );
   }
 }
 
 class LogoutConfirmDialog extends StatelessWidget {
-  const LogoutConfirmDialog({
-    super.key,
-  });
+  const LogoutConfirmDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
