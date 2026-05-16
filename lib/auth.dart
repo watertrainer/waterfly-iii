@@ -19,6 +19,7 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:version/version.dart';
+import 'package:waterflyiii/api_service.dart';
 import 'package:waterflyiii/generated/swagger_fireflyiii_api/client_index.dart';
 import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:waterflyiii/stock.dart';
@@ -212,6 +213,11 @@ class FireflyService with ChangeNotifier {
   Object? get storageSignInException => _storageSignInException;
   Version? _apiVersion;
   Version? get apiVersion => _apiVersion;
+  ApiService? _apiService;
+  ApiService get apiService {
+    _apiService ??= ApiService(api: api);
+    return _apiService!;
+  }
 
   TransStock? _transStock;
   TransStock? get transStock => _transStock;

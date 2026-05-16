@@ -19,6 +19,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:version/version.dart';
 
 import 'package:waterflyiii/animations.dart';
+import 'package:waterflyiii/api_service.dart';
 import 'package:waterflyiii/auth.dart';
 import 'package:waterflyiii/extensions.dart';
 import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
@@ -347,7 +348,7 @@ class _TransactionPageState extends State<TransactionPage>
         _localCurrency = context.read<FireflyService>().defaultCurrency;
 
         if (widget.notification != null) {
-          final FireflyIii api = context.read<FireflyService>().api;
+          final ApiService api = context.read<FireflyService>().apiService;
           final SettingsProvider settings = context.read<SettingsProvider>();
 
           log.info("Got notification ${widget.notification?.title}");
@@ -382,12 +383,10 @@ class _TransactionPageState extends State<TransactionPage>
                   _localCurrency!.attributes.code == currencyStrAlt ||
                   _localCurrency!.attributes.symbol == currencyStrAlt) {
               } else {
-                final Response<CurrencyArray> response =
-                    await api.v1CurrenciesGet();
-                if (!response.isSuccessful || response.body == null) {
-                  log.warning("api currency fetch failed");
+                final CurrencyArray? curArr = await api.getCurrencyList();
+                if (curArr == null) {
                 } else {
-                  for (CurrencyRead cur in response.body!.data) {
+                  for (CurrencyRead cur in curArr.data) {
                     if (cur.attributes.code == currencyStr ||
                         cur.attributes.symbol == currencyStr ||
                         cur.attributes.code == currencyStrAlt ||
@@ -470,14 +469,13 @@ class _TransactionPageState extends State<TransactionPage>
           }
 
           // Check account
-          final Response<AccountArray> response =
-              await api.v1AccountsGet(type: AccountTypeFilter.assetAccount);
-          if (!response.isSuccessful || response.body == null) {
-            log.warning("api account fetch failed");
+          final AccountArray? accountList =
+              await api.getAccountList(type: AccountTypeFilter.assetAccount);
+          if (accountList == null) {
             return;
           }
           final String settingAppId = appSettings.defaultAccountId ?? "0";
-          for (AccountRead acc in response.body!.data) {
+          for (AccountRead acc in accountList.data) {
             if (acc.id == settingAppId ||
                 widget.notification!.body
                     .containsIgnoreCase(acc.attributes.name)) {
